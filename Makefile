@@ -10,7 +10,7 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/Estatisticas.cpp
 
 # Nome do executável
-EXEC = $(BIN_DIR)/executavel
+EXEC = $(BIN_DIR)/tp1.out
 
 # Flags do compilador
 CXX = g++
