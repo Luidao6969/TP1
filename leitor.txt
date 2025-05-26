@@ -1,0 +1,93 @@
+#include "../include/Ordenador.hpp"
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <dirent.h>
+#include <cstring>
+
+using namespace std;
+
+typedef struct {
+    int seed;
+    double limiarCusto;
+} Custos;
+
+void lerArquivo(const char* nomeArquivo, int*& V, int& tam, double& a, double& b, double& c, Custos& custo) {
+    cout << "Tentando abrir arquivo: '" << nomeArquivo << "'" << endl;
+    FILE* arquivo = fopen(nomeArquivo, "r");
+    if (!arquivo) {
+        printf("Erro ao abrir arquivo '%s'\n", nomeArquivo);
+        exit(1);
+    }
+
+    fscanf(arquivo, "%d", &custo.seed);
+    fscanf(arquivo, "%lf", &custo.limiarCusto);
+    fscanf(arquivo, "%lf", &a);
+    fscanf(arquivo, "%lf", &b);
+    fscanf(arquivo, "%lf", &c);
+    fscanf(arquivo, "%d", &tam);
+
+    srand(custo.seed);
+
+    if (tam <= 0) {
+        fprintf(stderr, "Tamanho de vetor inválido: %d\n", tam);
+        exit(1);
+    }
+
+    V = new int[tam];
+    for (int i = 0; i < tam; i++) {
+        fscanf(arquivo, "%d", &V[i]);
+    }
+
+    fclose(arquivo);
+}
+
+void processarArquivo(const char* nomeArquivo) {
+    int* vetor = nullptr;
+    int tam;
+    double a, b, c;
+    Custos custo;
+
+    lerArquivo(nomeArquivo, vetor, tam, a, b, c, custo);
+
+    Ordenador o(a, b, c);
+    double custo1 = custo.limiarCusto;
+    int seed1 = custo.seed;
+
+    int quebras = o.contarQuebras(vetor, tam);
+
+    cout << "size " << tam << " seed " << seed1 << " breaks " << quebras << endl;
+    cout << endl;
+
+    int limiarOtimo = o.determinaLimiarParticao(vetor, tam, custo1);
+    o.determinaLimiarQuebras(vetor, tam, custo1, limiarOtimo, seed1);
+
+    delete[] vetor;
+}
+
+int main() {
+    DIR* dir;
+    struct dirent* ent;
+    bool encontrouArquivo = false;
+
+    dir = opendir(".");
+    if (dir != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            if (strstr(ent->d_name, ".txt") != nullptr) {
+                encontrouArquivo = true;
+                processarArquivo(ent->d_name);
+            }
+        }
+        closedir(dir);
+    } else {
+        perror("Não foi possível abrir o diretório.");
+        return EXIT_FAILURE;
+    }
+
+    if (!encontrouArquivo) {
+        cout << "Nenhum arquivo .txt encontrado no diretório atual." << endl;
+        return 1;
+    }
+
+    return 0;
+}
