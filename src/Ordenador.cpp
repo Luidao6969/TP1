@@ -218,6 +218,10 @@ int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minT
 
     Sort s2;
     Estatistica e2;
+    if (passoLQ == 0) passoLQ = 1;
+
+    Sort s2;
+    Estatistica e2;
     Estatistica custoQS[10], custoINS[10];
     int lqTestados[10];
     int numLQ = 0;
@@ -231,6 +235,9 @@ int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minT
     for (int i = 0; i < tam; i++)
         Vord[i] = V[i];
     s2.insertionSort(Vord, 0, tam - 1, &e2);
+    for (int i = 0; i < tam; i++) Vord[i] = V[i];
+    s2.insertionSort(Vord, 0, tam - 1, &e2);
+
 
     while ((contador < maxIteracoes))
     {
