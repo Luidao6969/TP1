@@ -3,34 +3,35 @@
 #include <cstdlib>
 #include <cstdio>
 
-void lerArquivo(const char* nomeArquivo, int*& V, int& tam, double& a, double& b, double& c) {
+using namespace std;
+
+typedef struct {
+    int seed;
+    double limiarCusto;
+} Custos;
+
+void lerArquivo(const char* nomeArquivo, int*& V, int& tam, double& a, double& b, double& c, Custos& custo) {
+    cout << "Tentando abrir arquivo: '" << nomeArquivo << "'" << endl;
     FILE* arquivo = fopen(nomeArquivo, "r");
     if (!arquivo) {
         printf("Erro ao abrir arquivo\n");
         exit(1);
     }
 
-    int seed;
-    double limiarCusto;
+    fscanf(arquivo, "%d", &custo.seed);
+    fscanf(arquivo, "%lf", &custo.limiarCusto);
+    fscanf(arquivo, "%lf", &a);
+    fscanf(arquivo, "%lf", &b);
+    fscanf(arquivo, "%lf", &c);
+    fscanf(arquivo, "%d", &tam);
 
-    // Ler os 6 primeiros valores corretamente
-    fscanf(arquivo, "%d", &seed);           // 1. semente aleatória
-    fscanf(arquivo, "%lf", &limiarCusto);   // 2. limiar de convergência
-    fscanf(arquivo, "%lf", &a);             // 3. coeficiente a
-    fscanf(arquivo, "%lf", &b);             // 4. coeficiente b
-    fscanf(arquivo, "%lf", &c);             // 5. coeficiente c
-    fscanf(arquivo, "%d", &tam);            // 6. tamanho do vetor
+    srand(custo.seed);
 
-    // Opcionalmente usar a semente, se necessário
-    srand(seed);
-
-    // Validar tamanho
     if (tam <= 0) {
         fprintf(stderr, "Tamanho de vetor inválido: %d\n", tam);
         exit(1);
     }
 
-    // Alocar e ler vetor
     V = new int[tam];
     for (int i = 0; i < tam; i++) {
         fscanf(arquivo, "%d", &V[i]);
@@ -39,25 +40,42 @@ void lerArquivo(const char* nomeArquivo, int*& V, int& tam, double& a, double& b
     fclose(arquivo);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        cerr << "Uso: " << argv[0] << " <nome_arquivo>" << endl;
+        // Adicione isso para debug no VPL:
+        cerr << "Argumentos recebidos: " << argc << endl;
+        for (int i = 0; i < argc; i++) {
+            cerr << "argv[" << i << "] = " << argv[i] << endl;
+        }
+        return 1;
+    }
+
+    const char* nomeArquivo = argv[1];
+
     int* vetor = nullptr;
     int tam;
     double a, b, c;
-    
+    Custos custo;
+
     // Ler dados do arquivo
-    lerArquivo("teste1.txt", vetor, tam, a, b, c);
-    
+    lerArquivo(nomeArquivo, vetor, tam, a, b, c, custo);
+
     // Criar ordenador
     Ordenador o(a, b, c);
-    
-    // Determinar limiar ótimo
-    int limiarOtimo = o.determinaLimiarParticao(vetor, tam, 10);
-    o.determinaLimiarQuebras(vetor, tam, 10, limiarOtimo, 1);
-    //int quebraOtimo = o.determinaLimiarQuebras(vetor, tam, 10, 10);
+    double custo1 = custo.limiarCusto;
+    int seed1 = custo.seed;
 
-    
-    printf("Limiar ótimo de partição: %d\n", limiarOtimo);
-    
+    // Conta as quebras
+    int quebras = o.contarQuebras(vetor, tam);
+
+    cout << "size " << tam << " seed " << seed1 << " breaks " << quebras << endl;
+    cout << endl;
+
+    // Determinar limiar ótimo
+    int limiarOtimo = o.determinaLimiarParticao(vetor, tam, custo1);
+    o.determinaLimiarQuebras(vetor, tam, custo1, limiarOtimo, seed1);
+
     delete[] vetor;
     return 0;
 }

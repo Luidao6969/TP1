@@ -2,13 +2,14 @@
 #define ESTATISTICAS
 
 typedef struct {
+
     int comparacoes;
     int trocas;
     int minParticao;
     int chamadas;
     double custo;
 
-    // For break threshold testing
+    //Para a comparação dupla entre QuickSort e InsertionSort
     double custoInsercao;
     int comparacoesInsercao;
     int trocasInsercao;

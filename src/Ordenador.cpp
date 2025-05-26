@@ -1,6 +1,6 @@
 #include "../include/Ordenador.hpp"
 #include <cstdlib> // Para drand48()
-#include <cmath>   // Para abs()
+#include <cmath>   // Para fabs()
 #include <cstdio>  // Para printf()
 
 Ordenador::Ordenador(double coefA, double coefB, double coefC)
@@ -9,6 +9,11 @@ Ordenador::Ordenador(double coefA, double coefB, double coefC)
     a = coefA;
     b = coefB;
     c = coefC;
+
+    if (a <= 0 && b <= 0 && c <= 0)
+    {
+       cout << "Aviso: todos os coeficientes de custo são zero ou negativos." << endl;
+    }
 }
 
 Ordenador::~Ordenador() {}
@@ -23,7 +28,6 @@ int Ordenador::contarQuebras(int *V, int tam)
             quebras++;
         }
     }
-    // cout << quebras;
     return quebras;
 }
 
@@ -78,7 +82,7 @@ void Ordenador::calculaNovaFaixa(int limParticao, int *minMPS, int *maxMPS, int 
         (*passoMPS) = 1;
 }
 
-int Ordenador::findIndexByMPS(int mps, Estatistica *custo, int numMPS)
+int Ordenador::findIndexMPS(int mps, Estatistica *custo, int numMPS)
 {
     for (int i = 0; i < numMPS; i++)
     {
@@ -92,6 +96,11 @@ int Ordenador::findIndexByMPS(int mps, Estatistica *custo, int numMPS)
 
 int Ordenador::determinaLimiarParticao(int *V, int tam, int limiarCusto)
 {
+    if (V == nullptr || tam <= 0)
+    {
+        printf("Erro: vetor nulo ou tamanho inválido.\n");
+        return -1;
+    }
     int minMPS = 2;
     int maxMPS = tam;
     int passoMPS = (maxMPS - minMPS) / 5;
@@ -106,16 +115,16 @@ int Ordenador::determinaLimiarParticao(int *V, int tam, int limiarCusto)
     int maxIteracoes = 5;
     int contador = 0;
 
-    numeroQuebras = contarQuebras(V, tam);
+    numeroQuebras = contarQuebras(V, tam); // Numero de quebras do vetor
 
-    while ((diffCusto > limiarCusto) && (maxMPS - minMPS) >= 5 && contador < maxIteracoes)
+    while ((diffCusto > limiarCusto) && (maxMPS - minMPS) >= 5 && contador < maxIteracoes) // Executa até que o custo convirja (diffCusto abaixo do limite)
     {
         numMPS = 0;
         printf("iter %d \n", contador++);
-        //cout << "maxMPS: " << maxMPS << endl;
+        // cout << "maxMPS: " << maxMPS << endl;
         for (int t = minMPS; t <= maxMPS; t += passoMPS)
         {
-            int copia[tam];
+            int copia[tam]; // Cria uma cópia do vetor original para não alterar os dados entre execuções
             for (int i = 0; i < tam; i++)
                 copia[i] = V[i];
             custo[numMPS] = ordenadorUniversal(copia, tam, t, numeroQuebras);
@@ -123,12 +132,10 @@ int Ordenador::determinaLimiarParticao(int *V, int tam, int limiarCusto)
             numMPS++;
         }
 
-        limParticao = menorCusto(custo, numMPS);
-        //cout << "Dados do diffcusto: " << custo[0].custo << endl;
-        //cout << "Dados do diffcusto: " << custo[numMPS - 1].custo << endl;
+        limParticao = menorCusto(custo, numMPS); // Identifica o índice com menor custo
         calculaNovaFaixa(limParticao, &minMPS, &maxMPS, &passoMPS, numMPS, custo);
-        posMin = findIndexByMPS(minMPS, custo, numMPS);
-        posMax = findIndexByMPS(maxMPS, custo, numMPS);
+        posMin = findIndexMPS(minMPS, custo, numMPS); // Encontra os índices
+        posMax = findIndexMPS(maxMPS, custo, numMPS); // Encontra os índices
         if (posMin == -1 || posMax == -1)
         {
             printf("Erro: minMPS ou maxMPS não encontrado nos custos!\n");
@@ -138,12 +145,9 @@ int Ordenador::determinaLimiarParticao(int *V, int tam, int limiarCusto)
         {
             diffCusto = fabs(custo[posMin].custo - custo[posMax].custo);
         }
-        printf("nummps %d limParticao %d mpsdiff %.6lf\n",
-               numMPS, custo[limParticao].minParticao, diffCusto);
+        printf("nummps %d limParticao %d mpsdiff %.6lf\n", numMPS, custo[limParticao].minParticao, diffCusto);
+        cout << endl;
     }
-
-    printf(">>> Melhor minParticao: %d (custo: %.3lf)\n",
-           custo[limParticao].minParticao, custo[limParticao].custo);
     return custo[limParticao].minParticao;
 }
 
@@ -158,7 +162,7 @@ Estatistica Ordenador::ordenadorUniversal(int *V, int tam, int minTamParticao, i
     Sort s;
     int contadorInsertion = 0;
     int contadorQuick = 0;
-    if (numeroQuebras < limiarQuebras)
+    if (numeroQuebras < limiarQuebras) // Seleção do algorítmo de ordenação
     {
         s.insertionSort(V, 0, tam - 1, &e);
         contadorInsertion++;
@@ -200,12 +204,20 @@ int Ordenador::shuffleVector(int *vet, int size, int numShuffle)
     return 0;
 }
 
-int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minTamParticao, int seed) {
+int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minTamParticao, int seed)
+{
     int minLQ = 1;
     int maxLQ = tam / 2;
     int passoLQ = (maxLQ - minLQ) / 5;
-    if (passoLQ == 0) passoLQ = 1;
+    if (passoLQ == 0)
+        passoLQ = 1;
+        
+    if (limiarCusto < 0){
+        return -1;
+    }
 
+    Sort s2;
+    Estatistica e2;
     Estatistica custoQS[10], custoINS[10];
     int lqTestados[10];
     int numLQ = 0;
@@ -216,29 +228,30 @@ int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minT
 
     // Cria vetor ordenado base
     int Vord[tam];
-    for (int i = 0; i < tam; i++) Vord[i] = V[i];
+    for (int i = 0; i < tam; i++)
+        Vord[i] = V[i];
+    s2.insertionSort(Vord, 0, tam - 1, &e2);
 
-    while ((diffCusto > limiarCusto) && (maxLQ - minLQ >= passoLQ) && (contador < maxIteracoes)) {
+    while ((contador < maxIteracoes))
+    {
         numLQ = 0;
         printf("iter %d\n", contador++);
-        for (int q = minLQ; q <= maxLQ && numLQ < 7; q += passoLQ) {
+        for (int q = minLQ; q <= maxLQ && numLQ < 7; q += passoLQ)
+        { // Testa diferentes quantidades de quebras, limitando no máximo 7 por iteração
             lqTestados[numLQ] = q;
 
             // Cria vetor embaralhado com exatamente q quebras
             int VcopyQS[tam], VcopyINS[tam];
-            for (int i = 0; i < tam; i++) {
+            for (int i = 0; i < tam; i++)
+            {
                 VcopyQS[i] = Vord[i];
                 VcopyINS[i] = Vord[i];
             }
-
             srand48(seed);
             shuffleVector(VcopyQS, tam, q);
             srand48(seed);
             shuffleVector(VcopyINS, tam, q);
 
-            // =============================
-            // ▶️ Executa QuickSort isolado
-            // =============================
             Estatistica eQS;
             eQS.comparacoes = eQS.trocas = eQS.chamadas = 0;
             eQS.minParticao = minTamParticao;
@@ -247,18 +260,14 @@ int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minT
             eQS.custo = a * eQS.comparacoes + b * eQS.trocas + c * eQS.chamadas;
             custoQS[numLQ] = eQS;
 
-            // =============================
-            // ▶️ Executa Insertion Sort isolado
-            // =============================
             Estatistica eINS;
             eINS.comparacoes = eINS.trocas = eINS.chamadas = 0;
-            eINS.minParticao = tam + 1; // Arbitrário aqui
+            eINS.minParticao = tam + 1;
             Sort sINS;
             sINS.insertionSort(VcopyINS, 0, tam - 1, &eINS);
             eINS.custo = a * eINS.comparacoes + b * eINS.trocas + c * eINS.chamadas;
             custoINS[numLQ] = eINS;
 
-            // ▶️ Imprime os resultados dessa rodada
             printf("qs lq %3d cost %.9lf cmp %6d move %5d calls %4d\n",
                    q, eQS.custo, eQS.comparacoes, eQS.trocas, eQS.chamadas);
 
@@ -268,31 +277,32 @@ int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minT
             numLQ++;
         }
 
-        // ===================================
-        // ▶️ Busca a menor diferença de custo
-        // ===================================
-        double menorDif = fabs(custoQS[0].custo - custoINS[0].custo);
+        double menorDif = fabs(custoQS[0].custo - custoINS[0].custo); // Calcula em qual quantidade de quebras os dois algoritmos têm custo mais próximo.
         limQuebrasIdx = 0;
 
-        for (int i = 1; i < numLQ; i++) {
+        for (int i = 1; i < numLQ; i++)
+        {
             double dif = fabs(custoQS[i].custo - custoINS[i].custo);
-            if (dif < menorDif) {
+            if (dif < menorDif)
+            {
                 menorDif = dif;
                 limQuebrasIdx = i;
             }
         }
 
-        // ===================================
-        // ▶️ Refinamento da faixa
-        // ===================================
         int newMin, newMax;
-        if (limQuebrasIdx == 0) {
+        if (limQuebrasIdx == 0)
+        {
             newMin = 0;
             newMax = (numLQ >= 3) ? 2 : numLQ - 1;
-        } else if (limQuebrasIdx == numLQ - 1) {
+        }
+        else if (limQuebrasIdx == numLQ - 1)
+        {
             newMin = (numLQ >= 3) ? numLQ - 3 : 0;
             newMax = numLQ - 1;
-        } else {
+        }
+        else
+        {
             newMin = limQuebrasIdx - 1;
             newMax = limQuebrasIdx + 1;
         }
@@ -301,18 +311,17 @@ int Ordenador::determinaLimiarQuebras(int *V, int tam, int limiarCusto, int minT
         maxLQ = lqTestados[newMax];
 
         passoLQ = (maxLQ - minLQ) / 5;
-        if (passoLQ == 0) passoLQ = 1;
+        if (passoLQ == 0)
+            passoLQ = 1;
 
         int posMin = newMin;
         int posMax = newMax;
-        diffCusto = fabs(custoQS[posMin].custo - custoQS[posMax].custo);
+        diffCusto = fabs(custoINS[posMin].custo - custoINS[posMax].custo); // Calcula a diferença de custo na nova faixa
 
-        printf("numlq %d limQuebras %d lqdiff %.6lf\n",
-               numLQ, lqTestados[limQuebrasIdx], diffCusto);
+        printf("numlq %d limQuebras %d lqdiff %.6lf\n", numLQ, lqTestados[limQuebrasIdx], diffCusto);
+
+        cout << endl;
     }
-
-    printf(">>> Melhor limQuebras: %d (custoQS: %.3lf)\n",
-           lqTestados[limQuebrasIdx], custoQS[limQuebrasIdx].custo);
 
     return lqTestados[limQuebrasIdx];
 }

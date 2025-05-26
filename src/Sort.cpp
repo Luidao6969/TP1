@@ -11,7 +11,7 @@ void Sort::swap(int *a, int *b, Estatistica *est)
     int temp = *a;
     *a = *b;
     *b = temp;
-    est->trocas += 3; // 3 movimentações (temp = *a, *a = *b, *b = temp)
+    est->trocas += 3; // 3 movimentações 
 }
 
 void Sort::insertionSort(int *V, int ini, int fim, Estatistica *est)
